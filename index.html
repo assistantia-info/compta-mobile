@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compta Mobile — caisse</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header id="app-header">
+  <div class="brand">Compta</div>
+  <div class="sync-state">
+    <span id="mode-badge" class="badge badge-dry">SIMULATION</span>
+    <span id="net-badge" class="badge">…</span>
+    <span id="auth-badge" class="badge">…</span>
+    <span id="pending-badge" class="badge">0 en file</span>
+  </div>
+</header>
+
+<nav id="tabs" class="tabs">
+  <button data-tab="saisie" class="tab active">Saisie</button>
+  <button data-tab="file" class="tab">File</button>
+  <button data-tab="reglages" class="tab">Réglages</button>
+  <button data-tab="diag" class="tab">Diagnostic</button>
+</nav>
+
+<main>
+  <!-- Saisie -->
+  <section id="tab-saisie" class="panel active">
+    <form id="form-depense" autocomplete="off">
+      <label for="f-date">Date</label>
+      <input type="date" id="f-date" required>
+      <label for="f-libelle">Détail (commentaire en cellule)</label>
+      <input type="text" id="f-libelle" maxlength="120" placeholder="Ex : plein 45L SP98">
+      <label for="f-categorie">Catégorie (tables du tableur)</label>
+      <select id="f-categorie">
+        <option value="">— choisir une catégorie —</option>
+        <option value="Carburant">Carburant</option>
+        <option value="Alimentation">Alimentation</option>
+        <option value="Pharmacie">Pharmacie</option>
+      </select>
+      <label for="f-enseigne">Magasin (détermine la colonne)</label>
+      <select id="f-enseigne"></select>
+      <label for="f-montant">Montant (€)</label>
+      <input type="text" id="f-montant" inputmode="decimal" required placeholder="0,00">
+      <div class="seg" id="seg-type">
+        <button type="button" data-val="debit" class="seg-btn active">Dépense</button>
+        <button type="button" data-val="credit" class="seg-btn">Crédit</button>
+      </div>
+      <button type="submit" id="btn-save" class="btn-save">Enregistrer</button>
+    </form>
+    <div id="saisie-msg" class="msg" hidden></div>
+    <h2>Dernières saisies</h2>
+    <ul id="recent-list" class="list"></ul>
+  </section>
+
+  <!-- File -->
+  <section id="tab-file" class="panel">
+    <div class="row-actions">
+      <button id="btn-sync" class="btn">Synchroniser</button>
+      <span id="sync-info" class="muted"></span>
+    </div>
+    <ul id="file-list" class="list"></ul>
+    <h2>Journal de synchronisation</h2>
+    <pre id="sync-log" class="log"></pre>
+  </section>
+
+  <!-- Réglages -->
+  <section id="tab-reglages" class="panel">
+    <form id="form-config" autocomplete="off">
+      <h2>Sécurité</h2>
+      <label class="check"><input type="checkbox" id="c-dryrun" checked> Mode simulation (dry-run) — aucune écriture vers OneDrive</label>
+      <h2>Voie d'envoi</h2>
+      <label for="c-authmode">Mode</label>
+      <select id="c-authmode">
+        <option value="link">Lien de partage OneDrive</option>
+        <option value="oauth">OAuth Microsoft (Graph)</option>
+      </select>
+      <div id="grp-link">
+        <label for="c-shareurl">Lien de partage « Peut modifier »</label>
+        <input type="url" id="c-shareurl" placeholder="https://1drv.ms/u/…">
+      </div>
+      <div id="grp-oauth">
+        <label for="c-clientid">Client ID (application Entra)</label>
+        <input type="text" id="c-clientid" placeholder="00000000-0000-0000-0000-000000000000">
+        <p class="hint">Redirect URI à déclarer dans Azure : <code id="hint-redirect"></code></p>
+      </div>
+      <h2>Classeur cible</h2>
+      <label for="c-path">Chemin OneDrive du classeur API</label>
+      <input type="text" id="c-path" value="Compta familiale/depenses fixe sept 2026-2027 API.xlsx">
+      <label for="c-sheet">Feuille journal</label>
+      <input type="text" id="c-sheet" value="RELSEPT26">
+      <p class="hint">Écriture = ventilation directe dans la table du mois (carburant F33:M43, alimentaire A85:N94, pharmacie F50:H55) selon la date, avec le détail en commentaire de la cellule cible. Les onglets REL restent la copie bancaire manuelle.</p>
+      <button type="submit" class="btn">Enregistrer les réglages</button>
+    </form>
+  </section>
+
+  <!-- Diagnostic -->
+  <section id="tab-diag" class="panel">
+    <p class="muted" id="diag-version">Version : chargement…</p>
+    <h2>Voie (b) — lien de partage</h2>
+    <p class="muted">Exécute le test de reprise prévu par la pause : lecture GET puis écriture PUT (octets identiques).</p>
+    <button id="btn-diag-get" class="btn">1. Tester la lecture (GET)</button>
+    <button id="btn-diag-put" class="btn btn-danger">2. Tester l'écriture (PUT, octets identiques)</button>
+    <h2>Voie (a) — OAuth Graph</h2>
+    <button id="btn-diag-oauth" class="btn">Tester la connexion Microsoft Graph</button>
+    <pre id="diag-out" class="log"></pre>
+  </section>
+</main>
+
+<script src="js/config.js" defer></script>
+<script src="js/db.js" defer></script>
+<script src="js/xlsx-surgery.js" defer></script>
+<script src="js/graph.js" defer></script>
+<script src="js/link.js" defer></script>
+<script src="js/sync.js" defer></script>
+<script src="js/app.js" defer></script>
+</body>
+</html>
